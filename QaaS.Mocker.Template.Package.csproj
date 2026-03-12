@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <PackageId>QaaS.Mocker.Template</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>SmokeTeam</Authors>
+    <Description>Installable dotnet new template pack for Rider-friendly QaaS mocker projects.</Description>
+    <PackageTags>dotnet-new;template;qaas;mocker;rider;docker</PackageTags>
+    <PackageType>Template</PackageType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/TheSmokeTeam/QaaS.Mocker.Template</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <IncludeContentInPack>true</IncludeContentInPack>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoBuild>true</NoBuild>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <Content Include="template\**\*" Exclude="template\**\bin\**;template\**\obj\**" Pack="true" PackagePath="content" />
+  </ItemGroup>
+
+</Project>
