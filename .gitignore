@@ -1,10 +1,10 @@
 artifacts/
+artifacts/*.nupkg
+artifacts/*.snupkg
 bin/
 obj/
 .idea/
 .vs/
 .templateengine/
-*.nupkg
-*.snupkg
 .idea/
 .vs/
