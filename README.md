@@ -28,8 +28,6 @@ The easiest public install path is the GitHub release asset:
 
 Download it from the `1.1.0` release page for this repository, then install it with `dotnet new install`.
 
-This package can also be installed from GitHub Packages if you have a token that can read packages from `TheSmokeTeam`.
-
 ## Important Packaging Note
 
 As of March 15, 2026, `QaaS.Mocker` `2.0.0-alpha.12` on `nuget.org` still depends on `QaaS.Mocker.Controller` and `QaaS.Mocker.Servers`, but those packages are not published there.
@@ -57,14 +55,6 @@ From the repository root:
 
 ```bash
 dotnet new install .
-```
-
-## Install From GitHub Packages
-
-GitHub Packages for NuGet requires authentication. After configuring your GitHub package source, install a specific version with:
-
-```bash
-dotnet new install QaaS.Mocker.Template::1.1.0 --add-source https://nuget.pkg.github.com/TheSmokeTeam/index.json
 ```
 
 ## Create a New Mocker Project
