@@ -6,14 +6,15 @@
     "QaaS",
     "Mocker",
     "Rider",
-    "Docker"
+    "Docker",
+    "Template"
   ],
   "name": "QaaS Mocker Project",
-  "identity": "SmokeTeam.QaaS.Mocker.Project.1.0.0",
+  "identity": "SmokeTeam.QaaS.Mocker.Project.1.1.0",
   "shortName": [
     "qaas-mocker"
   ],
-  "description": "Creates a minimal Rider-friendly QaaS mocker project with Docker support.",
+  "description": "Creates a minimal Rider-friendly QaaS mocker project with Docker and GitHub Actions support.",
   "sourceName": "QaaS.Mocker.Template",
   "preferNameDirectory": true,
   "primaryOutputs": [

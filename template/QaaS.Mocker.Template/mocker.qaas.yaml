@@ -2,7 +2,9 @@ DataSources: []
 
 Stubs:
   - Name: HealthStub
-    Processor: HealthProcessor
+    Processor: StatusCodeTransactionProcessor
+    ProcessorSpecificConfiguration:
+      StatusCode: 200
 
 Server:
   Type: Http
