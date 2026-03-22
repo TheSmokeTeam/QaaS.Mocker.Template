@@ -152,6 +152,7 @@ $projectFile = Join-Path $generatedProjectRoot "$generatedName.csproj"
 $nuGetConfig = Join-Path $generatedRoot "NuGet.config"
 $readmePath = Join-Path $generatedRoot "README.md"
 $yamlPath = Join-Path $generatedProjectRoot "mocker.qaas.yaml"
+$yamlRunPath = "$generatedName/mocker.qaas.yaml"
 $dockerfilePath = Join-Path $generatedRoot "Dockerfile"
 $generatedWorkflowPath = Join-Path $generatedRoot ".github\workflows\ci.yml"
 $assetsFile = Join-Path $generatedProjectRoot "obj\project.assets.json"
@@ -168,6 +169,8 @@ $projectText = Get-Content $projectFile -Raw
 $nuGetConfigText = Get-Content $nuGetConfig -Raw
 $readmeText = Get-Content $readmePath -Raw
 $yamlText = Get-Content $yamlPath -Raw
+$workflowText = Get-Content $generatedWorkflowPath -Raw
+$programText = Get-Content $projectFile.Replace("$generatedName.csproj", "Program.cs") -Raw
 
 Assert-True ($projectText -match '<PackageReference Include="QaaS\.Mocker" Version="\*" />') (
     "Generated project should use a floating QaaS.Mocker package reference."
@@ -184,17 +187,32 @@ Assert-True ($nuGetConfigText -match 'https://api\.nuget\.org/v3/index\.json') (
 Assert-True ($nuGetConfigText -notmatch 'local-packages') (
     "Generated NuGet.config should no longer reference template-local package caches."
 )
-Assert-True ($yamlText -match '(?m)^Servers:\s*$') (
-    "Generated YAML should use the current 'Servers' array shape."
+Assert-True ($programText.Trim() -eq 'QaaS.Mocker.Bootstrap.New(args).Run();') (
+    "Generated Program.cs should contain only the mocker bootstrap call."
+)
+Assert-True ($yamlText -match '(?m)^DataSources:\s*\[\]\s*$') (
+    "Generated YAML should use an empty DataSources list."
+)
+Assert-True ($yamlText -match '(?m)^Stubs:\s*\[\]\s*$') (
+    "Generated YAML should use an empty Stubs list."
+)
+Assert-True ($yamlText -match '(?m)^Servers:\s*\[\]\s*$') (
+    "Generated YAML should use an empty Servers list."
 )
 Assert-True ($yamlText -notmatch '(?m)^Server:\s*$') (
-    "Generated YAML should no longer use the deprecated singular 'Server' shape."
+    "Generated YAML should not use the deprecated singular Server section."
 )
-Assert-True ($yamlText -match 'QaaS\.Framework\.SDK\.Hooks\.BaseHooks\.StatusCodeTransactionProcessor') (
-    "Generated YAML should use the fully qualified status code processor."
+Assert-True (-not (Test-Path (Join-Path $generatedProjectRoot "Properties"))) (
+    "Generated project should not include a Properties folder."
 )
-Assert-True ($readmeText -match 'Servers') (
-    "Generated README should describe the current server configuration shape."
+Assert-True ($readmeText -match 'empty `DataSources`, `Stubs`, and `Servers` lists') (
+    "Generated README should describe the minimal empty mocker config."
+)
+Assert-True ($readmeText -match 'Add at least one server') (
+    "Generated README should explain that a server must be added before linting or running the mocker."
+)
+Assert-True ($workflowText -match 'Default empty mocker config detected; skipping lint until a server is added\.') (
+    "Generated workflow should skip lint when the default empty mocker config has not been configured yet."
 )
 
 dotnet restore $solutionPath --configfile $nuGetConfig
@@ -207,13 +225,35 @@ if ($LASTEXITCODE -ne 0) {
     throw "dotnet build failed."
 }
 
-$lintOutput = & dotnet run -c $Configuration --project $projectFile -- -m Lint mocker.qaas.yaml 2>&1 | Out-String
-if ($LASTEXITCODE -ne 0) {
-    throw "Mocker lint execution failed.`n$lintOutput"
+Push-Location $generatedRoot
+try {
+    $helpOutput = & dotnet run -c $Configuration --project $projectFile -- --help 2>&1 | Out-String
+    if ($LASTEXITCODE -ne 0) {
+        throw "Mocker help execution failed.`n$helpOutput"
+    }
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $lintOutput = & dotnet run -c $Configuration --project $projectFile -- -m Lint $yamlRunPath 2>&1 | Out-String
+        $lintExitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+}
+finally {
+    Pop-Location
 }
 
-Assert-True ($lintOutput -match 'Lint mode completed successfully') (
-    "Mocker lint output did not report success.`n$lintOutput"
+Assert-True ($helpOutput -match '--mode') (
+    "Mocker help output did not render the command options.`n$helpOutput"
+)
+Assert-True ($lintExitCode -ne 0) (
+    "Default empty mocker config should not lint successfully until a server is added."
+)
+Assert-True ($lintOutput -match "Either 'Server' or 'Servers' must be configured\.") (
+    "Mocker lint output should explain that a server must be added to the default empty config.`n$lintOutput"
 )
 Assert-True ($lintOutput -notmatch 'Property Type in path Server') (
     "Mocker lint output still reports the deprecated Server.Type warning.`n$lintOutput"

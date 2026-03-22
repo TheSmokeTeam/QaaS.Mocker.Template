@@ -4,31 +4,22 @@ This project was created from the `QaaS.Mocker.Template` dotnet template pack.
 
 ## Included Defaults
 
-- `Program.cs` follows the example-project startup pattern and normalizes `--no-env`
+- `Program.cs` runs `QaaS.Mocker.Bootstrap.New(args).Run()`
 - `NuGet.config` defaults restores to `nuget.org`
-- `mocker.qaas.yaml` defines a single HTTP `/health` endpoint under `Servers`
-- `mocker.qaas.yaml` uses `QaaS.Framework.SDK.Hooks.BaseHooks.StatusCodeTransactionProcessor`, so there is no custom processor code to maintain
+- `mocker.qaas.yaml` starts with empty `DataSources`, `Stubs`, and `Servers` lists
 - `Dockerfile`, `NuGet.config`, and `.github/workflows/ci.yml` are included
 
-## First Run
+## First Steps
 
 ```bash
 dotnet restore --configfile NuGet.config
-dotnet run --project QaaS.Mocker.Template/QaaS.Mocker.Template.csproj -- -m Lint mocker.qaas.yaml
-dotnet run --project QaaS.Mocker.Template/QaaS.Mocker.Template.csproj -- mocker.qaas.yaml
 ```
 
-Then call:
+Add at least one server to `QaaS.Mocker.Template/mocker.qaas.yaml`, then lint or run it:
 
 ```bash
-curl http://localhost:8080/health
-```
-
-## Validate
-
-```bash
-dotnet run --project QaaS.Mocker.Template/QaaS.Mocker.Template.csproj -- -m Lint mocker.qaas.yaml
-docker build -t qaas-mocker-project .
+dotnet run --project QaaS.Mocker.Template/QaaS.Mocker.Template.csproj -- -m Lint QaaS.Mocker.Template/mocker.qaas.yaml
+dotnet run --project QaaS.Mocker.Template/QaaS.Mocker.Template.csproj -- QaaS.Mocker.Template/mocker.qaas.yaml
 ```
 
 If you restore from a private feed or local Artifactory, update `NuGet.config` before the first restore.

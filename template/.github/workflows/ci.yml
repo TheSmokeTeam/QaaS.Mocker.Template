@@ -33,6 +33,10 @@ jobs:
       - name: Lint mocker config
         shell: bash
         run: |
+          if grep -Eq '^Servers:\s*\[\]\s*$' QaaS.Mocker.Template/mocker.qaas.yaml; then
+            echo "Default empty mocker config detected; skipping lint until a server is added."
+            exit 0
+          fi
           cd QaaS.Mocker.Template
           dotnet run -c "${{ env.CONFIGURATION }}" --no-build -- -m Lint mocker.qaas.yaml
 
