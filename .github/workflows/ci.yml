@@ -1,5 +1,8 @@
 name: CI
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: ["**"]
@@ -33,14 +36,144 @@ jobs:
             echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Validate template
+      - name: Resolve package version
+        id: version
         shell: pwsh
         run: |
           $packageVersion = "${{ steps.tag.outputs.tag }}"
           if ([string]::IsNullOrWhiteSpace($packageVersion)) {
-            .\tools\Validate-Template.ps1 -Configuration $env:CONFIGURATION
-          } else {
-            .\tools\Validate-Template.ps1 -Configuration $env:CONFIGURATION -PackageVersion $packageVersion
+            [xml]$projectXml = Get-Content .\QaaS.Mocker.Template.Package.csproj
+            $packageVersion = $projectXml.Project.PropertyGroup.Version
+          }
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "packageVersion=$packageVersion"
+
+      - name: Pack template
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path .\artifacts\package | Out-Null
+          dotnet pack .\QaaS.Mocker.Template.Package.csproj `
+            --configuration $env:CONFIGURATION `
+            -p:PackageVersion=${{ steps.version.outputs.packageVersion }} `
+            --output .\artifacts\package
+          if ($LASTEXITCODE -ne 0) {
+            throw "dotnet pack failed."
+          }
+
+      - name: Smoke test template
+        shell: pwsh
+        run: |
+          $generatedName = "Smoke.QaaS.Mocker"
+          $runRoot = Join-Path $PWD "artifacts\smoke\$([Guid]::NewGuid().ToString('N'))"
+          $generatedRoot = Join-Path $runRoot "generated"
+          New-Item -ItemType Directory -Force -Path $runRoot | Out-Null
+
+          $env:DOTNET_CLI_HOME = Join-Path $runRoot "cli-home"
+          $env:NUGET_PACKAGES = Join-Path $runRoot "nuget-packages"
+          $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
+
+          $package = Get-ChildItem .\artifacts\package\QaaS.Mocker.Template.*.nupkg |
+            Where-Object { $_.Name -notlike "*.snupkg" } |
+            Select-Object -First 1
+
+          if ($null -eq $package) {
+            throw "Template package was not created."
+          }
+
+          dotnet new install $package.FullName
+          if ($LASTEXITCODE -ne 0) {
+            throw "dotnet new install failed."
+          }
+
+          dotnet new qaas-mocker -n $generatedName -o $generatedRoot
+          if ($LASTEXITCODE -ne 0) {
+            throw "dotnet new qaas-mocker failed."
+          }
+
+          $solutionPath = Join-Path $generatedRoot "$generatedName.sln"
+          $projectFile = Join-Path $generatedRoot $generatedName "$generatedName.csproj"
+          $nuGetConfig = Join-Path $generatedRoot "NuGet.config"
+          $yamlPath = Join-Path $generatedRoot $generatedName "mocker.qaas.yaml"
+          $yamlRunPath = "$generatedName/mocker.qaas.yaml"
+
+          dotnet restore $solutionPath --configfile $nuGetConfig
+          if ($LASTEXITCODE -ne 0) {
+            throw "dotnet restore failed."
+          }
+
+          dotnet build $solutionPath -c $env:CONFIGURATION --no-restore
+          if ($LASTEXITCODE -ne 0) {
+            throw "dotnet build failed."
+          }
+
+          Push-Location $generatedRoot
+          try {
+            $helpOutput = & dotnet run -c $env:CONFIGURATION --project $projectFile -- --help 2>&1 | Out-String
+            if ($LASTEXITCODE -ne 0) {
+              throw "Mocker help execution failed.`n$helpOutput"
+            }
+
+            $previousErrorActionPreference = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
+            try {
+              $defaultLintOutput = & dotnet run -c $env:CONFIGURATION --project $projectFile -- -m Lint $yamlRunPath 2>&1 | Out-String
+              $defaultLintExitCode = $LASTEXITCODE
+            }
+            finally {
+              $ErrorActionPreference = $previousErrorActionPreference
+            }
+          }
+          finally {
+            Pop-Location
+          }
+
+          if ($helpOutput -notmatch "--mode") {
+            throw "Mocker help output did not render the command options.`n$helpOutput"
+          }
+
+          if ($defaultLintExitCode -eq 0) {
+            throw "Default empty mocker config should not lint successfully until a server is added."
+          }
+
+          if ($defaultLintOutput -notmatch "Either 'Server' or 'Servers' must be configured\.") {
+            throw "Mocker lint output should explain that a server must be added.`n$defaultLintOutput"
+          }
+
+          $configuredYaml = @"
+DataSources: []
+
+Stubs:
+  - Name: HealthStub
+    Processor: StatusCodeTransactionProcessor
+    ProcessorSpecificConfiguration:
+      StatusCode: 200
+
+Servers:
+  - Http:
+      Port: 8080
+      IsLocalhost: true
+      Endpoints:
+        - Path: /health
+          Actions:
+            - Name: HealthAction
+              Method: Get
+              TransactionStubName: HealthStub
+"@
+
+          Set-Content -Path $yamlPath -Value $configuredYaml -NoNewline
+
+          Push-Location $generatedRoot
+          try {
+            $configuredLintOutput = & dotnet run -c $env:CONFIGURATION --project $projectFile -- -m Lint $yamlRunPath 2>&1 | Out-String
+            if ($LASTEXITCODE -ne 0) {
+              throw "Configured mocker lint execution failed.`n$configuredLintOutput"
+            }
+          }
+          finally {
+            Pop-Location
+          }
+
+          if ($configuredLintOutput -notmatch "Lint mode completed successfully") {
+            throw "Configured mocker lint did not report success.`n$configuredLintOutput"
           }
 
       - name: Upload package artifact
@@ -49,3 +182,11 @@ jobs:
         with:
           name: qaas-mocker-template-package
           path: artifacts\package\QaaS.Mocker.Template.*.nupkg
+
+      - name: Create GitHub release
+        if: steps.tag.outputs.tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts\package\QaaS.Mocker.Template.*.nupkg
+          fail_on_unmatched_files: true
+          generate_release_notes: true
