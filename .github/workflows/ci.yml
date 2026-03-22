@@ -11,9 +11,6 @@ env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   CONFIGURATION: Release
-  PACKAGE_PROJECT: QaaS.Mocker.Template.Package.csproj
-  TEMPLATE_SHORT_NAME: qaas-mocker
-  TEMPLATE_SMOKE_NAME: Smoke.QaaS.Mocker
 
 jobs:
   pack-and-smoke-test:
@@ -33,42 +30,22 @@ jobs:
         shell: bash
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            echo "is_tag=true" >> "$GITHUB_OUTPUT"
             echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_tag=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Pack template
+      - name: Validate template
         shell: pwsh
         run: |
-          $version = if ("${{ steps.tag.outputs.is_tag }}" -eq "true") { "${{ steps.tag.outputs.tag }}" } else { "1.1.0-ci" }
-          dotnet pack ${{ env.PACKAGE_PROJECT }} `
-            --configuration ${{ env.CONFIGURATION }} `
-            -p:PackageVersion=$version `
-            --output artifacts
-
-      - name: Install template
-        shell: pwsh
-        run: |
-          $package = Get-ChildItem artifacts\QaaS.Mocker.Template.*.nupkg |
-            Where-Object { $_.Name -notlike "*.snupkg" } |
-            Select-Object -First 1 -ExpandProperty FullName
-          dotnet new install $package
-
-      - name: Smoke test template
-        shell: pwsh
-        run: |
-          dotnet new ${{ env.TEMPLATE_SHORT_NAME }} -n ${{ env.TEMPLATE_SMOKE_NAME }} -o smoke
-          dotnet restore smoke\${{ env.TEMPLATE_SMOKE_NAME }}.sln --configfile smoke\NuGet.config
-          dotnet build smoke\${{ env.TEMPLATE_SMOKE_NAME }}.sln -c ${{ env.CONFIGURATION }} --no-restore
-          Push-Location smoke\${{ env.TEMPLATE_SMOKE_NAME }}
-          dotnet run -c ${{ env.CONFIGURATION }} --no-build --project .\${{ env.TEMPLATE_SMOKE_NAME }}.csproj -- -m Lint mocker.qaas.yaml
-          Pop-Location
+          $packageVersion = "${{ steps.tag.outputs.tag }}"
+          if ([string]::IsNullOrWhiteSpace($packageVersion)) {
+            .\tools\Validate-Template.ps1 -Configuration $env:CONFIGURATION
+          } else {
+            .\tools\Validate-Template.ps1 -Configuration $env:CONFIGURATION -PackageVersion $packageVersion
+          }
 
       - name: Upload package artifact
-        if: steps.tag.outputs.is_tag == 'true'
+        if: steps.tag.outputs.tag != ''
         uses: actions/upload-artifact@v4
         with:
           name: qaas-mocker-template-package
-          path: artifacts\QaaS.Mocker.Template.*.nupkg
+          path: artifacts\package\QaaS.Mocker.Template.*.nupkg

@@ -2,18 +2,17 @@ DataSources: []
 
 Stubs:
   - Name: HealthStub
-    Processor: StatusCodeTransactionProcessor
+    Processor: QaaS.Framework.SDK.Hooks.BaseHooks.StatusCodeTransactionProcessor
     ProcessorSpecificConfiguration:
       StatusCode: 200
 
-Server:
-  Type: Http
-  Http:
-    Port: 8080
-    IsLocalhost: false
-    Endpoints:
-      - Path: /health
-        Actions:
-          - Name: HealthAction
-            Method: Get
-            TransactionStubName: HealthStub
+Servers:
+  - Http:
+      Port: 8080
+      IsLocalhost: true
+      Endpoints:
+        - Path: /health
+          Actions:
+            - Name: HealthAction
+              Method: Get
+              TransactionStubName: HealthStub

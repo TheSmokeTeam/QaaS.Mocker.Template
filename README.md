@@ -5,7 +5,6 @@ Installable `dotnet new` template pack for creating Rider-friendly QaaS mocker p
 ## What This Repo Publishes
 
 - Template package ID: `QaaS.Mocker.Template`
-- Current release: `1.1.0`
 - Template short name: `qaas-mocker`
 - Template display name in IDEs: `QaaS Mocker Project`
 
@@ -14,33 +13,27 @@ After the template pack is installed, Rider and the `dotnet new` CLI can create 
 - `Program.cs` following the example-project startup pattern
 - `Dockerfile`
 - `NuGet.config`
-- a minimal HTTP `/health` endpoint
+- a minimal HTTP `/health` endpoint under the current `Servers` YAML shape
 - no custom processor code in the generated project
 - generated-project GitHub Actions CI
-- the latest mocker package pinned in this release: `QaaS.Mocker` `2.0.0-alpha.12`
-- `QaaS.Common.Processors` pinned to `1.0.1-alpha.9`
+- `QaaS.Mocker` referenced with `Version="*"` so restore resolves the latest stable package on the configured feed
+- the health stub configured against `QaaS.Framework.SDK.Hooks.BaseHooks.StatusCodeTransactionProcessor`
 
 ## Download Options
 
-The easiest public install path is the GitHub release asset:
+The easiest public install path is the latest GitHub release asset:
 
-- `QaaS.Mocker.Template.1.1.0.nupkg`
+- `QaaS.Mocker.Template.<version>.nupkg`
 
-Download it from the `1.1.0` release page for this repository, then install it with `dotnet new install`.
-
-## Important Packaging Note
-
-As of March 15, 2026, `QaaS.Mocker` `2.0.0-alpha.12` on `nuget.org` still depends on `QaaS.Mocker.Controller` and `QaaS.Mocker.Servers`, but those packages are not published there.
-
-To keep the generated template working from a clean machine, this template pack vendors the matching package chain inside the generated project under `.nuget/local-packages` and wires it through `NuGet.config`.
+Download it from this repository's Releases page, then install it with `dotnet new install`.
 
 ## Install From a Downloaded Release
 
-1. Download `QaaS.Mocker.Template.1.1.0.nupkg` from the `1.1.0` release.
+1. Download `QaaS.Mocker.Template.<version>.nupkg` from Releases.
 2. Install it:
 
 ```bash
-dotnet new install .\QaaS.Mocker.Template.1.1.0.nupkg
+dotnet new install .\QaaS.Mocker.Template.<version>.nupkg
 ```
 
 3. Verify it is available:
@@ -55,6 +48,12 @@ From the repository root:
 
 ```bash
 dotnet new install .
+```
+
+To run the full local validation flow that packs, installs, generates a repo, restores, builds, and lints the default config:
+
+```powershell
+.\tools\Validate-Template.ps1
 ```
 
 ## Create a New Mocker Project
@@ -77,6 +76,8 @@ Rider:
 If Rider was already open before installation, refresh the new project dialog or restart Rider.
 
 The generated project includes a `launchSettings.json` profile named `QaaS Mocker` with `mocker.qaas.yaml`, plus a generated `.github/workflows/ci.yml` that restores, builds, lints the YAML, and builds the Docker image when the project is pushed to GitHub.
+
+If you restore from a private feed or local Artifactory, update the generated `NuGet.config` before the first restore.
 
 ## Uninstall
 
@@ -112,13 +113,13 @@ dotnet new install .\QaaS.Mocker.Template.<new-version>.nupkg
 Pick the exact release you want from GitHub Releases, download its `.nupkg`, then install that file:
 
 ```bash
-dotnet new install .\QaaS.Mocker.Template.1.1.0.nupkg
+dotnet new install .\QaaS.Mocker.Template.<version>.nupkg
 ```
 
 If you are installing from a package feed, the supported CLI syntax for a fixed version is:
 
 ```bash
-dotnet new install QaaS.Mocker.Template::1.1.0
+dotnet new install QaaS.Mocker.Template::<version>
 ```
 
 ## Build the Template Pack Locally

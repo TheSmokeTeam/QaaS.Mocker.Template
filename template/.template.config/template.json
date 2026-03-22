@@ -43,7 +43,7 @@
       "description": "Restore NuGet packages required by this project.",
       "manualInstructions": [
         {
-          "text": "Run 'dotnet restore QaaS.Mocker.Template.sln --configfile NuGet.config'."
+          "text": "Run 'dotnet restore <your-solution>.sln --configfile NuGet.config'."
         }
       ],
       "continueOnError": true,
