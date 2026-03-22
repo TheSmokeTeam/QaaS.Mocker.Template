@@ -90,9 +90,9 @@ jobs:
           }
 
           $solutionPath = Join-Path $generatedRoot "$generatedName.sln"
-          $projectFile = Join-Path $generatedRoot $generatedName "$generatedName.csproj"
+          $projectFile = Join-Path (Join-Path $generatedRoot $generatedName) "$generatedName.csproj"
           $nuGetConfig = Join-Path $generatedRoot "NuGet.config"
-          $yamlPath = Join-Path $generatedRoot $generatedName "mocker.qaas.yaml"
+          $yamlPath = Join-Path (Join-Path $generatedRoot $generatedName) "mocker.qaas.yaml"
           $yamlRunPath = "$generatedName/mocker.qaas.yaml"
 
           dotnet restore $solutionPath --configfile $nuGetConfig
