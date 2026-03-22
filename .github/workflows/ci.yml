@@ -138,26 +138,26 @@ jobs:
             throw "Mocker lint output should explain that a server must be added.`n$defaultLintOutput"
           }
 
-          $configuredYaml = @"
-DataSources: []
-
-Stubs:
-  - Name: HealthStub
-    Processor: StatusCodeTransactionProcessor
-    ProcessorSpecificConfiguration:
-      StatusCode: 200
-
-Servers:
-  - Http:
-      Port: 8080
-      IsLocalhost: true
-      Endpoints:
-        - Path: /health
-          Actions:
-            - Name: HealthAction
-              Method: Get
-              TransactionStubName: HealthStub
-"@
+          $configuredYaml = @(
+            "DataSources: []",
+            "",
+            "Stubs:",
+            "  - Name: HealthStub",
+            "    Processor: StatusCodeTransactionProcessor",
+            "    ProcessorSpecificConfiguration:",
+            "      StatusCode: 200",
+            "",
+            "Servers:",
+            "  - Http:",
+            "      Port: 8080",
+            "      IsLocalhost: true",
+            "      Endpoints:",
+            "        - Path: /health",
+            "          Actions:",
+            "            - Name: HealthAction",
+            "              Method: Get",
+            "              TransactionStubName: HealthStub"
+          ) -join "`r`n"
 
           Set-Content -Path $yamlPath -Value $configuredYaml -NoNewline
 

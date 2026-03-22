@@ -29,8 +29,8 @@ If you restore from a private feed or local Artifactory, update the generated `N
 ## Pack Locally
 
 ```bash
-dotnet pack .\QaaS.Mocker.Template.Package.csproj -p:PackageVersion=1.2.1 -o .\artifacts\package
-dotnet new install .\artifacts\package\QaaS.Mocker.Template.1.2.1.nupkg
+dotnet pack .\QaaS.Mocker.Template.Package.csproj -p:PackageVersion=1.2.2 -o .\artifacts\package
+dotnet new install .\artifacts\package\QaaS.Mocker.Template.1.2.2.nupkg
 dotnet new qaas-mocker -n MyCompany.QaaS.Mocker
 ```
 
