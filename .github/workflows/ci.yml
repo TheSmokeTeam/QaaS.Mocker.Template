@@ -93,7 +93,7 @@ jobs:
           $projectFile = Join-Path (Join-Path $generatedRoot $generatedName) "$generatedName.csproj"
           $nuGetConfig = Join-Path $generatedRoot "NuGet.config"
           $yamlPath = Join-Path (Join-Path $generatedRoot $generatedName) "mocker.qaas.yaml"
-          $yamlRunPath = "$generatedName/mocker.qaas.yaml"
+          $yamlRunPath = "mocker.qaas.yaml"
 
           dotnet restore $solutionPath --configfile $nuGetConfig
           if ($LASTEXITCODE -ne 0) {
@@ -130,50 +130,65 @@ jobs:
             throw "Mocker help output did not render the command options.`n$helpOutput"
           }
 
-          if ($defaultLintExitCode -eq 0) {
-            throw "Default empty mocker config should not lint successfully until a server is added."
+          if ($defaultLintExitCode -ne 0) {
+            throw "Default mocker lint should succeed for the generated runnable health mock.`n$defaultLintOutput"
           }
 
-          if ($defaultLintOutput -notmatch "Either 'Server' or 'Servers' must be configured\.") {
-            throw "Mocker lint output should explain that a server must be added.`n$defaultLintOutput"
+          if ($defaultLintOutput -notmatch "Lint mode completed successfully") {
+            throw "Default mocker lint did not report success.`n$defaultLintOutput"
           }
 
-          $configuredYaml = @(
-            "DataSources: []",
-            "",
-            "Stubs:",
-            "  - Name: HealthStub",
-            "    Processor: StatusCodeTransactionProcessor",
-            "    ProcessorSpecificConfiguration:",
-            "      StatusCode: 200",
-            "",
-            "Servers:",
-            "  - Http:",
-            "      Port: 8080",
-            "      IsLocalhost: true",
-            "      Endpoints:",
-            "        - Path: /health",
-            "          Actions:",
-            "            - Name: HealthAction",
-            "              Method: Get",
-            "              TransactionStubName: HealthStub"
-          ) -join "`r`n"
+          $stdoutLog = Join-Path $runRoot "mocker-run.stdout.log"
+          $stderrLog = Join-Path $runRoot "mocker-run.stderr.log"
+          $mockerProcess = Start-Process `
+            -FilePath "dotnet" `
+            -ArgumentList @("run", "-c", $env:CONFIGURATION, "--project", $projectFile, "--", "run", "mocker.qaas.yaml") `
+            -WorkingDirectory $generatedRoot `
+            -RedirectStandardOutput $stdoutLog `
+            -RedirectStandardError $stderrLog `
+            -PassThru
 
-          Set-Content -Path $yamlPath -Value $configuredYaml -NoNewline
-
-          Push-Location $generatedRoot
           try {
-            $configuredLintOutput = & dotnet run -c $env:CONFIGURATION --project $projectFile -- -m Lint $yamlRunPath 2>&1 | Out-String
-            if ($LASTEXITCODE -ne 0) {
-              throw "Configured mocker lint execution failed.`n$configuredLintOutput"
+            $healthResponse = $null
+            for ($attempt = 0; $attempt -lt 15; $attempt++) {
+              Start-Sleep -Seconds 2
+
+              if ($mockerProcess.HasExited) {
+                $stdout = if (Test-Path $stdoutLog) { Get-Content -Raw $stdoutLog } else { "" }
+                $stderr = if (Test-Path $stderrLog) { Get-Content -Raw $stderrLog } else { "" }
+                throw "Generated mocker exited before serving /health.`nSTDOUT:`n$stdout`nSTDERR:`n$stderr"
+              }
+
+              try {
+                $healthResponse = Invoke-WebRequest -Uri "http://127.0.0.1:8080/health" -UseBasicParsing -TimeoutSec 5
+                break
+              }
+              catch {
+                if ($attempt -eq 14) {
+                  throw
+                }
+              }
+            }
+
+            if ($null -eq $healthResponse) {
+              $stdout = if (Test-Path $stdoutLog) { Get-Content -Raw $stdoutLog } else { "" }
+              $stderr = if (Test-Path $stderrLog) { Get-Content -Raw $stderrLog } else { "" }
+              throw "Generated mocker never served the /health endpoint.`nSTDOUT:`n$stdout`nSTDERR:`n$stderr"
+            }
+
+            if ($healthResponse.StatusCode -ne 200) {
+              throw "Generated mocker returned HTTP $($healthResponse.StatusCode) for /health."
+            }
+
+            if ($healthResponse.Content.Trim() -ne "healthy") {
+              throw "Generated mocker returned an unexpected /health payload.`n$($healthResponse.Content)"
             }
           }
           finally {
-            Pop-Location
-          }
-
-          if ($configuredLintOutput -notmatch "Lint mode completed successfully") {
-            throw "Configured mocker lint did not report success.`n$configuredLintOutput"
+            if ($null -ne $mockerProcess -and -not $mockerProcess.HasExited) {
+              Stop-Process -Id $mockerProcess.Id -Force
+              $mockerProcess.WaitForExit()
+            }
           }
 
       - name: Upload package artifact
