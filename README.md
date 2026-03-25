@@ -23,6 +23,7 @@ The generated repo includes:
 - `QaaS.Mocker` with `Version="*"` so restore pulls the latest stable version from the configured feed
 - a minimal `/health` mock under `Servers`
 - a local `HealthProcessor` implementation for the default response
+- a launch profile that opens `mocker.qaas.yaml`
 - `Dockerfile` and generated GitHub Actions CI
 
 If you restore from a private feed or local Artifactory, update the generated `NuGet.config` before the first restore.
@@ -30,9 +31,9 @@ If you restore from a private feed or local Artifactory, update the generated `N
 ## Pack Locally
 
 ```bash
-dotnet pack .\QaaS.Mocker.Template.Package.csproj -p:PackageVersion=1.3.0 -o .\artifacts\package
-dotnet new install .\artifacts\package\QaaS.Mocker.Template.1.3.0.nupkg
+dotnet pack .\QaaS.Mocker.Template.Package.csproj -p:PackageVersion=1.3.4 -o .\artifacts\package
+dotnet new install .\artifacts\package\QaaS.Mocker.Template.1.3.4.nupkg
 dotnet new qaas-mocker -n MyCompany.QaaS.Mocker
 ```
 
-Run the generated project with `dotnet run --project MyCompany.QaaS.Mocker/MyCompany.QaaS.Mocker.csproj -- run mocker.qaas.yaml`, then request `http://127.0.0.1:8080/health` to verify the default mock.
+Run the generated project with `dotnet run`, then request `http://127.0.0.1:8080/health` to verify the default mock.
