@@ -127,8 +127,8 @@ jobs:
             $previousErrorActionPreference = $ErrorActionPreference
             $ErrorActionPreference = "Continue"
             try {
-              $defaultLintOutput = & dotnet run -c $env:CONFIGURATION --project $projectFile -- -m Lint $yamlRunPath 2>&1 | Out-String
-              $defaultLintExitCode = $LASTEXITCODE
+              $defaultTemplateOutput = & dotnet run -c $env:CONFIGURATION --project $projectFile -- template $yamlRunPath 2>&1 | Out-String
+              $defaultTemplateExitCode = $LASTEXITCODE
             }
             finally {
               $ErrorActionPreference = $previousErrorActionPreference
@@ -142,12 +142,12 @@ jobs:
             throw "Mocker help output did not render the command options.`n$helpOutput"
           }
 
-          if ($defaultLintExitCode -ne 0) {
-            throw "Default mocker lint should succeed for the generated runnable health mock.`n$defaultLintOutput"
+          if ($defaultTemplateExitCode -ne 0) {
+            throw "Default mocker template rendering should succeed for the generated runnable health mock.`n$defaultTemplateOutput"
           }
 
-          if ($defaultLintOutput -notmatch "Lint mode completed successfully") {
-            throw "Default mocker lint did not report success.`n$defaultLintOutput"
+          if ($defaultTemplateOutput -notmatch "Servers:" -or $defaultTemplateOutput -notmatch "/health") {
+            throw "Default mocker template rendering did not include the expected server definition.`n$defaultTemplateOutput"
           }
 
           $stdoutLog = Join-Path $runRoot "mocker-run.stdout.log"

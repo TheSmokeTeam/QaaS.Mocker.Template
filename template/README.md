@@ -18,10 +18,10 @@ dotnet run --project QaaS.Mocker.Template/QaaS.Mocker.Template.csproj -- run moc
 curl http://127.0.0.1:8080/health
 ```
 
-Use this as a starting point for your own stubs and endpoints. For example, you can lint the file before expanding it:
+Use this as a starting point for your own stubs and endpoints. For example, you can render the effective configuration before expanding it:
 
 ```bash
-dotnet run --project QaaS.Mocker.Template/QaaS.Mocker.Template.csproj -- -m Lint mocker.qaas.yaml
+dotnet run --project QaaS.Mocker.Template/QaaS.Mocker.Template.csproj -- template mocker.qaas.yaml
 ```
 
 If you restore from a private feed or local Artifactory, update `NuGet.config` before the first restore.
