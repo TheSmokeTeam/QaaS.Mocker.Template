@@ -59,6 +59,18 @@ jobs:
             throw "dotnet pack failed."
           }
 
+      - name: Create mirror symbol package
+        shell: pwsh
+        run: |
+          $package = Join-Path $PWD "artifacts\package\QaaS.Mocker.Template.${{ steps.version.outputs.packageVersion }}.nupkg"
+
+          if (-not (Test-Path $package)) {
+            throw "Template package was not created at $package."
+          }
+
+          $symbolPackagePath = [System.IO.Path]::ChangeExtension($package, ".snupkg")
+          Copy-Item -Path $package -Destination $symbolPackagePath -Force
+
       - name: Smoke test template
         shell: pwsh
         run: |
@@ -196,12 +208,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: qaas-mocker-template-package
-          path: artifacts\package\QaaS.Mocker.Template.*.nupkg
+          path: |
+            artifacts\package\QaaS.Mocker.Template.*.nupkg
+            artifacts\package\QaaS.Mocker.Template.*.snupkg
 
       - name: Create GitHub release
         if: steps.tag.outputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts\package\QaaS.Mocker.Template.*.nupkg
+          files: |
+            artifacts\package\QaaS.Mocker.Template.*.nupkg
+            artifacts\package\QaaS.Mocker.Template.*.snupkg
           fail_on_unmatched_files: true
           generate_release_notes: true
