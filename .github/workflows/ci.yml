@@ -102,9 +102,9 @@ jobs:
           }
 
           $solutionPath = Join-Path $generatedRoot "$generatedName.sln"
-          $projectFile = Join-Path (Join-Path $generatedRoot $generatedName) "$generatedName.csproj"
+          $projectRoot = Join-Path $generatedRoot $generatedName
+          $projectFile = Join-Path $projectRoot "$generatedName.csproj"
           $nuGetConfig = Join-Path $generatedRoot "NuGet.config"
-          $yamlPath = Join-Path (Join-Path $generatedRoot $generatedName) "mocker.qaas.yaml"
           $yamlRunPath = "mocker.qaas.yaml"
 
           dotnet restore $solutionPath --configfile $nuGetConfig
@@ -117,7 +117,7 @@ jobs:
             throw "dotnet build failed."
           }
 
-          Push-Location $generatedRoot
+          Push-Location $projectRoot
           try {
             $helpOutput = & dotnet run -c $env:CONFIGURATION --project $projectFile -- --help 2>&1 | Out-String
             if ($LASTEXITCODE -ne 0) {
@@ -155,7 +155,7 @@ jobs:
           $mockerProcess = Start-Process `
             -FilePath "dotnet" `
             -ArgumentList @("run", "-c", $env:CONFIGURATION, "--project", $projectFile, "--", "run", "mocker.qaas.yaml") `
-            -WorkingDirectory $generatedRoot `
+            -WorkingDirectory $projectRoot `
             -RedirectStandardOutput $stdoutLog `
             -RedirectStandardError $stderrLog `
             -PassThru
