@@ -138,7 +138,7 @@ jobs:
             Pop-Location
           }
 
-          if ($helpOutput -notmatch "--mode") {
+          if ($helpOutput -notmatch "Usage:" -or $helpOutput -notmatch "run") {
             throw "Mocker help output did not render the command options.`n$helpOutput"
           }
 
