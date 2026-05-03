@@ -30,6 +30,34 @@
     "type": "project"
   },
   "symbols": {
+    "nugetFeedName": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "nuget.org",
+      "replaces": "QAAS_NUGET_FEED_NAME",
+      "description": "NuGet feed name written into the generated NuGet.config."
+    },
+    "nugetFeedUrl": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "https://api.nuget.org/v3/index.json",
+      "replaces": "QAAS_NUGET_FEED_URL",
+      "description": "NuGet feed URL written into the generated NuGet.config."
+    },
+    "dockerSdkImage": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "mcr.microsoft.com/dotnet/sdk:10.0",
+      "replaces": "QAAS_DOCKER_SDK_IMAGE",
+      "description": "Build-stage .NET SDK image written into the generated Dockerfile."
+    },
+    "dockerRuntimeImage": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "mcr.microsoft.com/dotnet/runtime:10.0",
+      "replaces": "QAAS_DOCKER_RUNTIME_IMAGE",
+      "description": "Runtime-stage .NET image written into the generated Dockerfile."
+    },
     "skipRestore": {
       "type": "parameter",
       "datatype": "bool",

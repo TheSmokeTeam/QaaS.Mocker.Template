@@ -75,13 +75,19 @@ jobs:
         shell: pwsh
         run: |
           $generatedName = "Smoke.QaaS.Mocker"
+          $customGeneratedName = "Smoke.QaaS.Mocker.Airgap"
           $runRoot = Join-Path $PWD "artifacts\smoke\$([Guid]::NewGuid().ToString('N'))"
           $generatedRoot = Join-Path $runRoot "generated"
+          $customGeneratedRoot = Join-Path $runRoot "generated-custom"
           New-Item -ItemType Directory -Force -Path $runRoot | Out-Null
 
           $env:DOTNET_CLI_HOME = Join-Path $runRoot "cli-home"
           $env:NUGET_PACKAGES = Join-Path $runRoot "nuget-packages"
           $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
+          $customFeedName = "qaas-airgap"
+          $customFeedUrl = "https://artifactory.example/api/nuget/qaas/index.json"
+          $customSdkImage = "registry.example.local/dotnet/sdk:10.0"
+          $customRuntimeImage = "registry.example.local/dotnet/runtime:10.0"
 
           $package = Get-ChildItem .\artifacts\package\QaaS.Mocker.Template.*.nupkg |
             Where-Object { $_.Name -notlike "*.snupkg" } |
@@ -110,6 +116,11 @@ jobs:
           dotnet restore $solutionPath --configfile $nuGetConfig
           if ($LASTEXITCODE -ne 0) {
             throw "dotnet restore failed."
+          }
+
+          $packageListOutput = & dotnet list $projectFile package 2>&1 | Out-String
+          if ($packageListOutput -notmatch 'QaaS\.Mocker\s+2\.\*\s+2\.\d+\.\d+') {
+            throw "Generated mocker did not resolve the expected stable 2.x package line.`n$packageListOutput"
           }
 
           dotnet build $solutionPath -c $env:CONFIGURATION --no-restore
@@ -201,6 +212,27 @@ jobs:
               Stop-Process -Id $mockerProcess.Id -Force
               $mockerProcess.WaitForExit()
             }
+          }
+
+          dotnet new qaas-mocker -n $customGeneratedName -o $customGeneratedRoot --skipRestore true --nugetFeedName $customFeedName --nugetFeedUrl $customFeedUrl --dockerSdkImage $customSdkImage --dockerRuntimeImage $customRuntimeImage
+          if ($LASTEXITCODE -ne 0) {
+            throw "dotnet new qaas-mocker custom feed/image generation failed."
+          }
+
+          $customNuGetConfig = Join-Path $customGeneratedRoot "NuGet.config"
+          [xml]$customNuGetXml = Get-Content $customNuGetConfig
+          $customSource = $customNuGetXml.configuration.packageSources.add | Select-Object -First 1
+          if ($customSource.key -ne $customFeedName -or $customSource.value -ne $customFeedUrl) {
+            throw "Custom mocker NuGet.config did not render the requested feed values."
+          }
+
+          $customDockerfile = Join-Path $customGeneratedRoot "Dockerfile"
+          $customDockerfileText = Get-Content -Raw $customDockerfile
+          if ($customDockerfileText -notmatch [regex]::Escape("FROM $customSdkImage AS build")) {
+            throw "Custom mocker Dockerfile did not render the requested SDK image."
+          }
+          if ($customDockerfileText -notmatch [regex]::Escape("FROM $customRuntimeImage")) {
+            throw "Custom mocker Dockerfile did not render the requested runtime image."
           }
 
       - name: Upload package artifact

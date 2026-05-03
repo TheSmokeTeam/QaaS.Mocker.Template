@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="QaaS.Mocker" Version="*" />
+    <PackageReference Include="QaaS.Mocker" Version="2.*" />
   </ItemGroup>
 
   <ItemGroup>
