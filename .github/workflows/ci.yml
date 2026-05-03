@@ -75,7 +75,7 @@ jobs:
         shell: pwsh
         run: |
           $generatedName = "Smoke.QaaS.Mocker"
-          $customGeneratedName = "Smoke.QaaS.Mocker.Airgap"
+          $customGeneratedName = "Smoke.QaaS.Mocker.Private"
           $runRoot = Join-Path $PWD "artifacts\smoke\$([Guid]::NewGuid().ToString('N'))"
           $generatedRoot = Join-Path $runRoot "generated"
           $customGeneratedRoot = Join-Path $runRoot "generated-custom"
@@ -84,7 +84,7 @@ jobs:
           $env:DOTNET_CLI_HOME = Join-Path $runRoot "cli-home"
           $env:NUGET_PACKAGES = Join-Path $runRoot "nuget-packages"
           $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
-          $customFeedName = "qaas-airgap"
+          $customFeedName = "qaas-private"
           $customFeedUrl = "https://artifactory.example/api/nuget/qaas/index.json"
           $customSdkImage = "registry.example.local/dotnet/sdk:10.0"
           $customRuntimeImage = "registry.example.local/dotnet/runtime:10.0"

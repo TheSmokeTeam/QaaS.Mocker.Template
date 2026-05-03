@@ -25,10 +25,10 @@ The generated repo includes:
 - a local `HealthProcessor` implementation for the default response
 - `Dockerfile` and generated GitHub Actions CI, with template parameters to override the SDK and runtime images at creation time
 
-Create an airgapped-flavored project directly from the template with:
+Create a private-feed and private-registry project directly from the template with:
 
 ```bash
-dotnet new qaas-mocker -n MyCompany.QaaS.Mocker --nugetFeedName qaas-airgap --nugetFeedUrl https://artifactory.example/api/nuget/qaas/index.json --dockerSdkImage registry.example.local/dotnet/sdk:10.0 --dockerRuntimeImage registry.example.local/dotnet/runtime:10.0
+dotnet new qaas-mocker -n MyCompany.QaaS.Mocker --nugetFeedName qaas-private --nugetFeedUrl https://artifactory.example/api/nuget/qaas/index.json --dockerSdkImage registry.example.local/dotnet/sdk:10.0 --dockerRuntimeImage registry.example.local/dotnet/runtime:10.0
 ```
 
 If you publish a separate internal template package, keep the source tree shared and change only the `defaultValue` entries for `nugetFeedName`, `nugetFeedUrl`, `dockerSdkImage`, and `dockerRuntimeImage` in `template/.template.config/template.json` before packing the internal variant.
