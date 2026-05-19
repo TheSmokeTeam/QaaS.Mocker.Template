@@ -19,13 +19,13 @@ dotnet new qaas-mocker -n MyCompany.QaaS.Mocker
 ```
 
 The generated repo includes:
-- `NuGet.config` pointing at `nuget.org`
+- `NuGet.config` using `QAAS_NUGET_SOURCE_URL`
 - `QaaS.Mocker` with `Version="*"` so restore pulls the latest stable version from the configured feed
 - a minimal `/health` mock under `Servers`
 - a local `HealthProcessor` implementation for the default response
 - `Dockerfile` and generated GitHub Actions CI
 
-If you restore from a private feed or local Artifactory, update the generated `NuGet.config` before the first restore.
+If you restore from a private feed or local Artifactory, set `QAAS_NUGET_SOURCE_URL` before restoring the generated project.
 
 ## Pack Locally
 
