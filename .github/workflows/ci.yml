@@ -14,6 +14,7 @@ env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   CONFIGURATION: Release
+  QAAS_NUGET_SOURCE_URL: ${{ vars.QAAS_NUGET_SOURCE_URL || 'https://api.nuget.org/v3/index.json' }}
 
 jobs:
   pack-and-smoke-test:
@@ -107,7 +108,7 @@ jobs:
           $nuGetConfig = Join-Path $generatedRoot "NuGet.config"
           $yamlRunPath = "mocker.qaas.yaml"
 
-          dotnet restore $solutionPath --configfile $nuGetConfig
+          dotnet restore $solutionPath --configfile $nuGetConfig --source $env:QAAS_NUGET_SOURCE_URL
           if ($LASTEXITCODE -ne 0) {
             throw "dotnet restore failed."
           }
