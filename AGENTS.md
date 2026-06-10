@@ -7,7 +7,7 @@ Guidance for AI agents working in this repository.
 The `dotnet new` template package for QaaS mock-server projects.
 
 - Install: `dotnet new install QaaS.Mocker.Template` → instantiate: `dotnet new qaas-mocker -n Org.Project`
-- Package: `QaaS.Mocker.Template` (PackageType=Template); identity `SmokeTeam.QaaS.Mocker.Project`.
+- Package: `QaaS.Mocker.Template` (PackageType=Template); identity `SmokeTeam.QaaS.Mocker.Project.1.2.2`.
 - Generated project: net10.0 Exe, one-line `Program.cs` (`QaaS.Mocker.Bootstrap.New(args).Run();`), working `mocker.qaas.yaml` (HTTP :8080 localhost `/health` → `HealthStub`), `Processors/HealthProcessor.cs` (`BaseTransactionProcessor<NoConfiguration>` returning 200 "healthy"), multi-stage `Dockerfile`, generated `.github/workflows/ci.yml` (build + conditional YAML lint + docker build), reference to `QaaS.Mocker` `Version="*"`.
 - Run a generated project: `dotnet run -- run mocker.qaas.yaml`; verify `curl http://127.0.0.1:8080/health` → `healthy`.
 
@@ -24,7 +24,7 @@ The `dotnet new` template package for QaaS mock-server projects.
 dotnet pack .\QaaS.Mocker.Template.Package.csproj -c Release -p:PackageVersion=9.9.9 -o .\artifacts\package
 dotnet new install .\artifacts\package\QaaS.Mocker.Template.9.9.9.nupkg
 dotnet new qaas-mocker -o sandbox -n Test.Project
-dotnet build sandbox
+dotnet build sandbox\Test.Project.sln
 dotnet new uninstall QaaS.Mocker.Template   # ALWAYS
 Remove-Item sandbox -Recurse -Force
 ```
