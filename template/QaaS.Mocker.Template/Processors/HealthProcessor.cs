@@ -8,7 +8,10 @@ namespace QaaS.Mocker.Template.Processors;
 
 public sealed class HealthProcessor : BaseTransactionProcessor<NoConfiguration>
 {
-    public override Data<object> Process(IImmutableList<DataSource> dataSourceList, Data<object> requestData)
+    public override Data<object> Process(
+        IImmutableList<DataSource> dataSourceList,
+        Data<object> requestData
+    )
     {
         return new Data<object>
         {
@@ -20,10 +23,10 @@ public sealed class HealthProcessor : BaseTransactionProcessor<NoConfiguration>
                     StatusCode = 200,
                     ResponseHeaders = new Dictionary<string, string>
                     {
-                        ["Content-Type"] = "text/plain; charset=utf-8"
-                    }
-                }
-            }
+                        ["Content-Type"] = "text/plain; charset=utf-8",
+                    },
+                },
+            },
         };
     }
 }
