@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <PackageId>QaaS.Mocker.Template</PackageId>
@@ -21,7 +20,11 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
-    <Content Include="template\**\*" Exclude="template\**\bin\**;template\**\obj\**" Pack="true" PackagePath="content" />
+    <Content
+      Include="template\**\*"
+      Exclude="template\**\bin\**;template\**\obj\**"
+      Pack="true"
+      PackagePath="content"
+    />
   </ItemGroup>
-
 </Project>
